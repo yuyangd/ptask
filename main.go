@@ -40,8 +40,8 @@ func main() {
 	// Get Task ENI
 	eni, err := (&EcsHandler{
 		Service: EcsClient(os.Getenv("AWS_DEFAULT_REGION")),
-		Cluster: td.Cluster,
-		TaskArn: td.TaskARN,
+		Cluster: &td.Cluster,
+		TaskArn: &td.TaskARN,
 	}).TaskEni()
 	if err != nil {
 		log.Fatalf("Failed to get ECS task ENI: %v", err)

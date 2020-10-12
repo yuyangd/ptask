@@ -14,8 +14,8 @@ import (
 
 type EcsHandler struct {
 	Service ECSIface
-	Cluster string
-	TaskArn string
+	Cluster *string
+	TaskArn *string
 }
 
 func EcsClient(region string) *ecs.ECS {
@@ -28,9 +28,9 @@ type ECSIface interface {
 
 func (h *EcsHandler) TaskEni() (*string, error) {
 	input := &ecs.DescribeTasksInput{
-		Cluster: aws.String(h.Cluster),
+		Cluster: aws.String(*h.Cluster),
 		Tasks: []*string{
-			aws.String(h.TaskArn),
+			aws.String(*h.TaskArn),
 		},
 	}
 	result, err := h.Service.DescribeTasks(input)
