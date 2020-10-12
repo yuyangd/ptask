@@ -10,8 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecs"
 )
 
-// Get TaskEni
-
+//EcsHandler exposes ECS interfaces
 type EcsHandler struct {
 	Service ECSIface
 	Cluster *string

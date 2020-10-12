@@ -15,7 +15,8 @@ var (
 
 	httpClient = &http.Client{Timeout: 10 * time.Second}
 
-	Record = os.Getenv("HOSTHEADER")
+	RecordName = os.Getenv("HOSTHEADER")
+	HostZoneID = os.Getenv("HostZoneID")
 )
 
 type TaskData struct {
@@ -34,8 +35,12 @@ func responseJson(url string, target interface{}) error {
 
 func main() {
 	// Verify Env
-	if Record == "" {
+	if RecordName == "" {
 		log.Fatalln("Missing Environment Variable HOSTHEADER record set")
+		os.Exit(1)
+	}
+	if HostZoneID == "" {
+		log.Fatalln("Missing Environment Variable HostZoneID record set")
 		os.Exit(1)
 	}
 
