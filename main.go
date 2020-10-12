@@ -14,6 +14,8 @@ var (
 	FargateMetadataEndpoint = "http://localhost:8080/v2/metadata"
 
 	httpClient = &http.Client{Timeout: 10 * time.Second}
+
+	Record = os.Getenv("HOSTHEADER")
 )
 
 type TaskData struct {
@@ -31,6 +33,12 @@ func responseJson(url string, target interface{}) error {
 }
 
 func main() {
+	// Verify Env
+	if Record == "" {
+		log.Fatalln("Missing Environment Variable HOSTHEADER record set")
+		os.Exit(1)
+	}
+
 	// Get Task
 	td := new(TaskData)
 	responseJson(FargateMetadataEndpoint, td)
@@ -50,7 +58,15 @@ func main() {
 
 	// Get Public IP
 
-	// If public IP not found, attach an EIP
+	pubIP, err := (&Ec2Handler{
+		Service: Ec2Client(os.Getenv("AWS_DEFAULT_REGION")),
+		Eni:     eni,
+	}).PublicIp()
+	if err != nil {
+		log.Fatalf("Failed to get PublicIP: %v", err)
+	}
+	log.Printf("Public IP: %v", *pubIP)
 
-	//
+	// Create route53 Record set
+
 }
