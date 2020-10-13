@@ -17,14 +17,17 @@ type EcsHandler struct {
 	TaskArn *string
 }
 
+// EcsClient returns the aws client of ECS
 func EcsClient(region string) *ecs.ECS {
 	return ecs.New(session.New(), aws.NewConfig().WithRegion(region))
 }
 
+// ECSIface defines the features implemented in ECS
 type ECSIface interface {
 	DescribeTasks(*ecs.DescribeTasksInput) (*ecs.DescribeTasksOutput, error)
 }
 
+// TaskEni get the ENI of the task
 func (h *EcsHandler) TaskEni() (*string, error) {
 	input := &ecs.DescribeTasksInput{
 		Cluster: aws.String(*h.Cluster),

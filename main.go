@@ -67,7 +67,7 @@ func main() {
 	pubIP, err := (&Ec2Handler{
 		Service: Ec2Client(region),
 		Eni:     eni,
-	}).PublicIp()
+	}).PublicIP()
 	if err != nil {
 		log.Fatalf("Failed to get PublicIP: %v", err)
 	}

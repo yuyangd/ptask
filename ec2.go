@@ -10,20 +10,24 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 )
 
+// Ec2Handler defines the interface and parameters
 type Ec2Handler struct {
 	Service Ec2Iface
 	Eni     *string
 }
 
+// Ec2Client return the aws client of EC2
 func Ec2Client(region string) *ec2.EC2 {
 	return ec2.New(session.New(), aws.NewConfig().WithRegion(region))
 }
 
+// Ec2Iface defines the features implemented in EC2
 type Ec2Iface interface {
 	DescribeNetworkInterfaces(*ec2.DescribeNetworkInterfacesInput) (*ec2.DescribeNetworkInterfacesOutput, error)
 }
 
-func (h *Ec2Handler) PublicIp() (*string, error) {
+// PublicIP return the public ip associated with the task ENI
+func (h *Ec2Handler) PublicIP() (*string, error) {
 	input := &ec2.DescribeNetworkInterfacesInput{
 		NetworkInterfaceIds: []*string{
 			aws.String(*h.Eni),

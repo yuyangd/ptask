@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/route53"
 )
 
+// DNSHandler defines the service interface and parameters
 type DNSHandler struct {
 	Service    DNSIface
 	RecordName *string
@@ -16,10 +17,12 @@ type DNSHandler struct {
 	PubIP      *string
 }
 
+//DNSClient returns the aws client of route53
 func DNSClient(region string) *route53.Route53 {
 	return route53.New(session.New(), aws.NewConfig().WithRegion(region))
 }
 
+// DNSIface define the features implemented in route53
 type DNSIface interface {
 	ChangeResourceRecordSets(input *route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error)
 	WaitUntilResourceRecordSetsChanged(input *route53.GetChangeInput) error
