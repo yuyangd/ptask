@@ -47,7 +47,10 @@ func main() {
 
 	// Get Task
 	td := new(TaskData)
-	responseJSON(FargateMetadataEndpoint, td)
+	err := responseJSON(FargateMetadataEndpoint, td)
+	if err != nil {
+		log.Fatalf("Failed to fetch metadata: %v", err)
+	}
 	log.Println(td.Cluster)
 	log.Println(td.TaskARN)
 
