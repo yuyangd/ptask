@@ -15,8 +15,18 @@ ENTRYPOINT ["/usr/local/bin/ptask", "exec", "--"]
 
 ### IAM Policy
 
-```json
-
+```yaml
+Policies:
+  - PolicyName: ECSTaskWithDNS
+    PolicyDocument:
+      Statement:
+        - Effect: Allow
+          Action:
+            - ecs:DescribeTasks
+            - ec2:DescribeNetworkInterfaces
+            - route53:ChangeResourceRecordSets
+            - route53:GetChange
+          Resource: "*"
 ```
 
 ### Environment Varibles in TaskDefinition
