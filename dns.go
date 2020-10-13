@@ -44,7 +44,7 @@ func (h *DNSHandler) RecordSet() error {
 								Value: aws.String(*h.PubIP), // Required
 							},
 						},
-						TTL:           aws.Int64(300),
+						TTL:           aws.Int64(60),
 						Weight:        aws.Int64(100),
 						SetIdentifier: aws.String(*h.PubIP),
 					},
