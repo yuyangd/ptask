@@ -22,9 +22,12 @@ func DNSClient(region string) *route53.Route53 {
 
 type DNSIface interface {
 	ChangeResourceRecordSets(input *route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error)
+	WaitUntilResourceRecordSetsChanged(input *route53.GetChangeInput) error
 }
 
-func (h *DNSHandler) RecordSet() {
+// RecordSet creates or update record set in route53
+func (h *DNSHandler) RecordSet() error {
+	log.Printf("Create or update record set: %v", *h.RecordName)
 	input := &route53.ChangeResourceRecordSetsInput{
 		ChangeBatch: &route53.ChangeBatch{
 			Changes: []*route53.Change{ // Required
@@ -32,7 +35,7 @@ func (h *DNSHandler) RecordSet() {
 					Action: aws.String("UPSERT"), // Required
 					ResourceRecordSet: &route53.ResourceRecordSet{ // Required
 						Name: aws.String(*h.RecordName), // Required
-						Type: aws.String("CNAME"),       // Required
+						Type: aws.String("A"),           // Required
 						ResourceRecords: []*route53.ResourceRecord{
 							{ // Required
 								Value: aws.String(*h.PubIP), // Required
@@ -61,6 +64,7 @@ func (h *DNSHandler) RecordSet() {
 			log.Println(err.Error())
 		}
 	}
-	log.Println(result)
-
+	return h.Service.WaitUntilResourceRecordSetsChanged(&route53.GetChangeInput{
+		Id: aws.String(*result.ChangeInfo.Id),
+	})
 }

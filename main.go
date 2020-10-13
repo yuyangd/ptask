@@ -10,21 +10,22 @@ import (
 
 var (
 	// FargateMetadataEndpoint refer to https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-metadata-endpoint-v2.html
-	// FargateMetadataEndpoint = "http://169.254.170.2/v2/metadata"
-	FargateMetadataEndpoint = "http://localhost:8080/v2/metadata"
+	FargateMetadataEndpoint = "http://169.254.170.2/v2/metadata"
+	// FargateMetadataEndpoint = "http://localhost:8080/v2/metadata"
 
 	httpClient = &http.Client{Timeout: 10 * time.Second}
-
-	RecordName = os.Getenv("HOSTHEADER")
-	HostZoneID = os.Getenv("HostZoneID")
+	region     = os.Getenv("AWS_DEFAULT_REGION")
+	recordName = os.Getenv("HOSTHEADER")
+	hostZoneID = os.Getenv("HOSTZONEID")
 )
 
+// TaskData represents ARNs required to describe an ECS Fargate task
 type TaskData struct {
 	Cluster string `json:"Cluster"`
 	TaskARN string `json:"TaskARN"`
 }
 
-func responseJson(url string, target interface{}) error {
+func responseJSON(url string, target interface{}) error {
 	r, err := httpClient.Get(url)
 	if err != nil {
 		return err
@@ -35,24 +36,24 @@ func responseJson(url string, target interface{}) error {
 
 func main() {
 	// Verify Env
-	if RecordName == "" {
+	if recordName == "" {
 		log.Fatalln("Missing Environment Variable HOSTHEADER record set")
 		os.Exit(1)
 	}
-	if HostZoneID == "" {
+	if hostZoneID == "" {
 		log.Fatalln("Missing Environment Variable HostZoneID record set")
 		os.Exit(1)
 	}
 
 	// Get Task
 	td := new(TaskData)
-	responseJson(FargateMetadataEndpoint, td)
+	responseJSON(FargateMetadataEndpoint, td)
 	log.Println(td.Cluster)
 	log.Println(td.TaskARN)
 
 	// Get Task ENI
 	eni, err := (&EcsHandler{
-		Service: EcsClient(os.Getenv("AWS_DEFAULT_REGION")),
+		Service: EcsClient(region),
 		Cluster: &td.Cluster,
 		TaskArn: &td.TaskARN,
 	}).TaskEni()
@@ -64,7 +65,7 @@ func main() {
 	// Get Public IP
 
 	pubIP, err := (&Ec2Handler{
-		Service: Ec2Client(os.Getenv("AWS_DEFAULT_REGION")),
+		Service: Ec2Client(region),
 		Eni:     eni,
 	}).PublicIp()
 	if err != nil {
@@ -74,4 +75,14 @@ func main() {
 
 	// Create route53 Record set
 
+	err = (&DNSHandler{
+		Service:    DNSClient(region),
+		RecordName: &recordName,
+		HostZoneID: &hostZoneID,
+		PubIP:      pubIP,
+	}).RecordSet()
+
+	if err != nil {
+		log.Printf("Error creating Route53 record: %v", err)
+	}
 }

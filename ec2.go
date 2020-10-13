@@ -47,10 +47,7 @@ func (h *Ec2Handler) PublicIp() (*string, error) {
 
 	if len(result.NetworkInterfaces) > 0 {
 		return result.NetworkInterfaces[0].Association.PublicIp, err
-	} else {
-		return nil, errors.New("No ENI found")
 	}
-
+	return nil, errors.New("No ENI found")
 	// (TODO)If public IP not found, attach an EIP
-
 }
