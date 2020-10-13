@@ -1,6 +1,6 @@
 # ptask
 
-Associate a record set to the public IP of ECS Fargate Task.
+Associate a Route53 record set to the public IP of an ECS Fargate Task.
 
 ## Usage
 
