@@ -21,8 +21,8 @@ func userHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	t := TaskData{
-		Cluster: "arn:aws:ecs:ap-southeast-2:567418462583:cluster/ecs-cluster-fin-exp-dev",
-		TaskARN: "arn:aws:ecs:ap-southeast-2:567418462583:task/ecs-cluster-fin-exp-dev/dfc8752c57134e17afee8696be98cf78",
+		Cluster: "arn:aws:ecs:ap-southeast-2:123456789012:cluster/my-ecs-cluster",
+		TaskARN: "arn:aws:ecs:ap-southeast-2:123456789012:task/my-ecs-cluster/dfc8752c12344e17afee8696be98ak78",
 		Family:  "myapp",
 		Containers: map[string]string{
 			"DockerId": "870b6c89b84778963577874678b34edbb1adac7a739fb33ce1ab39af9526be46",
