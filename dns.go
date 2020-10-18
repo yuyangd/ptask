@@ -2,72 +2,91 @@ package main
 
 import (
 	"log"
+	"strings"
 
 	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/route53"
+	cfn "github.com/aws/aws-sdk-go/service/cloudformation"
+	"github.com/awslabs/goformation/v4/cloudformation"
+	"github.com/awslabs/goformation/v4/cloudformation/route53"
 )
 
 // DNSHandler defines the service interface and parameters
 type DNSHandler struct {
-	Service    DNSIface
-	RecordName *string
-	HostZoneID *string
-	PubIP      *string
+	Service        DNSIface
+	RecordName     *string
+	HostedZoneName *string
+	PubIP          *string
 }
 
 //DNSClient returns the aws client of route53
-func DNSClient(region string) *route53.Route53 {
-	return route53.New(session.New(), aws.NewConfig().WithRegion(region))
+func DNSClient(region string) *cfn.CloudFormation {
+	return cfn.New(session.New(), aws.NewConfig().WithRegion("ap-southeast-2"))
 }
 
-// DNSIface define the features implemented in route53
 type DNSIface interface {
-	ChangeResourceRecordSets(input *route53.ChangeResourceRecordSetsInput) (*route53.ChangeResourceRecordSetsOutput, error)
-	WaitUntilResourceRecordSetsChanged(input *route53.GetChangeInput) error
+	CreateStack(input *cfn.CreateStackInput) (*cfn.CreateStackOutput, error)
+	UpdateStack(input *cfn.UpdateStackInput) (*cfn.UpdateStackOutput, error)
+	WaitUntilStackCreateComplete(input *cfn.DescribeStacksInput) error
+	WaitUntilStackUpdateComplete(input *cfn.DescribeStacksInput) error
+}
+
+func (h *DNSHandler) cfnTemplate() string {
+	template := cloudformation.NewTemplate()
+
+	template.Resources["BastionDNS"] = &route53.RecordSet{
+		HostedZoneName:  *h.HostedZoneName,
+		Name:            *h.RecordName,
+		Type:            "A",
+		ResourceRecords: []string{*h.PubIP},
+		TTL:             "60",
+	}
+	// Template string
+	j, err := template.JSON()
+	if err != nil {
+		log.Panicf("CFN Failed to generate JSON: %s\n", err)
+	} else {
+		log.Printf("%s\n", string(j))
+	}
+	return string(j)
 }
 
 // RecordSet creates or update record set in route53
 func (h *DNSHandler) RecordSet() error {
-	log.Printf("Create or update record set: %v", *h.RecordName)
-	input := &route53.ChangeResourceRecordSetsInput{
-		ChangeBatch: &route53.ChangeBatch{
-			Changes: []*route53.Change{ // Required
-				{ // Required
-					Action: aws.String("UPSERT"), // Required
-					ResourceRecordSet: &route53.ResourceRecordSet{ // Required
-						Name: aws.String(*h.RecordName), // Required
-						Type: aws.String("A"),           // Required
-						ResourceRecords: []*route53.ResourceRecord{
-							{ // Required
-								Value: aws.String(*h.PubIP), // Required
-							},
-						},
-						TTL:           aws.Int64(60),
-						Weight:        aws.Int64(100),
-						SetIdentifier: aws.String(*h.PubIP),
-					},
-				},
-			},
-			Comment: aws.String("Record Name for Public ECS task"),
-		},
-		HostedZoneId: aws.String(*h.HostZoneID),
-	}
-	result, err := h.Service.ChangeResourceRecordSets(input)
-	if err != nil {
-		if aerr, ok := err.(awserr.Error); ok {
-			switch aerr.Code() {
-			default:
-				log.Println(aerr.Error())
-			}
-		} else {
-			// Print the error, cast err to awserr.Error to get the Code and
-			// Message from an error.
-			log.Println(err.Error())
-		}
-	}
-	return h.Service.WaitUntilResourceRecordSetsChanged(&route53.GetChangeInput{
-		Id: aws.String(*result.ChangeInfo.Id),
+	tmpBody := h.cfnTemplate()
+	stackName := *h.RecordName
+	_, err := h.Service.CreateStack(&cfn.CreateStackInput{
+		StackName:    aws.String(stackName),
+		TemplateBody: aws.String(tmpBody),
 	})
+	if err != nil {
+		if strings.HasPrefix(err.Error(), "AlreadyExistsException") {
+			log.Println("Stack already exists, update stack")
+			output, err := h.Service.UpdateStack(&cfn.UpdateStackInput{
+				StackName:    aws.String(stackName),
+				TemplateBody: aws.String(tmpBody),
+			})
+			if err != nil {
+				log.Fatalf("Failed to update stack: %v", err)
+				return err
+			}
+			log.Println(*output.StackId)
+			err = h.Service.WaitUntilStackUpdateComplete(&cfn.DescribeStacksInput{StackName: aws.String(stackName)})
+			if err != nil {
+				log.Println(err)
+				return err
+			}
+			return err
+		}
+		log.Printf("Failed to create stack %v", err)
+		return err
+	}
+
+	// Wait until stack is created
+	err = h.Service.WaitUntilStackCreateComplete(&cfn.DescribeStacksInput{StackName: aws.String(stackName)})
+	if err != nil {
+		log.Println(err)
+		return err
+	}
+	return nil
 }

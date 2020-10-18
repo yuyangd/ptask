@@ -33,8 +33,8 @@ Policies:
 
 ```
 AWS_DEFAULT_REGION=ap-southeast-2
-HOSTHEADER=ptask.example.com
-HOSTZONEID=GFD977DEOUCCN
+HOSTHEADER=ptask.example.com.
+HOSTZONE=example.com.
 ```
 
 ## Go Build
@@ -55,7 +55,7 @@ go run mock/main.go
 # == Start ptask
 
 # Ensure AWS credential or configuration setup locally
-HOSTHEADER=ptask.example.com HOSTZONEID=GFD977DEOUCCN go run *.go
+HOSTHEADER=ptask.example.com HOSTZONE=example.com. go run *.go
 
 # == Expecting log messages
 

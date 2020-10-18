@@ -16,7 +16,7 @@ var (
 	httpClient = &http.Client{Timeout: 10 * time.Second}
 	region     = os.Getenv("AWS_DEFAULT_REGION")
 	recordName = os.Getenv("HOSTHEADER")
-	hostZoneID = os.Getenv("HOSTZONEID")
+	hostZone   = os.Getenv("HOSTZONE")
 )
 
 // TaskData represents ARNs required to describe an ECS Fargate task
@@ -40,8 +40,8 @@ func main() {
 		log.Fatalln("Missing Environment Variable HOSTHEADER record set")
 		os.Exit(1)
 	}
-	if hostZoneID == "" {
-		log.Fatalln("Missing Environment Variable HostZoneID record set")
+	if hostZone == "" {
+		log.Fatalln("Missing Environment Variable HOSTZONE record set")
 		os.Exit(1)
 	}
 
@@ -79,13 +79,13 @@ func main() {
 	// Create route53 Record set
 
 	err = (&DNSHandler{
-		Service:    DNSClient(region),
-		RecordName: &recordName,
-		HostZoneID: &hostZoneID,
-		PubIP:      pubIP,
+		Service:        DNSClient(region),
+		RecordName:     &recordName,
+		HostedZoneName: &hostZone,
+		PubIP:          pubIP,
 	}).RecordSet()
 
 	if err != nil {
-		log.Printf("Error creating Route53 record: %v", err)
+		log.Printf("Failed to provision Route53 record: %v", err)
 	}
 }
