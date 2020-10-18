@@ -13,18 +13,19 @@ import (
 
 // DNSHandler defines the service interface and parameters
 type DNSHandler struct {
-	Service        DNSIface
+	Service        CfnIface
 	RecordName     *string
 	HostedZoneName *string
 	PubIP          *string
 }
 
-//DNSClient returns the aws client of route53
+// DNSClient returns the aws client of route53
 func DNSClient(region string) *cfn.CloudFormation {
 	return cfn.New(session.New(), aws.NewConfig().WithRegion("ap-southeast-2"))
 }
 
-type DNSIface interface {
+// CfnIface expose the CFN feature that used to deploy DNS
+type CfnIface interface {
 	CreateStack(input *cfn.CreateStackInput) (*cfn.CreateStackOutput, error)
 	UpdateStack(input *cfn.UpdateStackInput) (*cfn.UpdateStackOutput, error)
 	WaitUntilStackCreateComplete(input *cfn.DescribeStacksInput) error
