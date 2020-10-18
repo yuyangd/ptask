@@ -55,7 +55,7 @@ func (h *DNSHandler) cfnTemplate() string {
 // RecordSet creates or update record set in route53
 func (h *DNSHandler) RecordSet() error {
 	tmpBody := h.cfnTemplate()
-	stackName := *h.RecordName
+	stackName := "BastionDNS"
 	_, err := h.Service.CreateStack(&cfn.CreateStackInput{
 		StackName:    aws.String(stackName),
 		TemplateBody: aws.String(tmpBody),
