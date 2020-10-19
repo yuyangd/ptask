@@ -84,14 +84,6 @@ Policies:
           Resource: "*"
 ```
 
-### Environment Varibles in TaskDefinition
-
-```
-AWS_DEFAULT_REGION=ap-southeast-2
-HOSTHEADER=ptask.example.com.
-HOSTZONE=example.com.
-```
-
 ## Go Build
 
 ```bash
