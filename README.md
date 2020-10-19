@@ -26,6 +26,11 @@ Policies:
             - ec2:DescribeNetworkInterfaces
             - route53:ChangeResourceRecordSets
             - route53:GetChange
+            - route53:ListHostedZones
+            - route53:ListResourceRecordSets
+            - cloudformation:CreateStack
+            - cloudformation:DescribeStacks
+            - cloudformation:UpdateStack
           Resource: "*"
 ```
 
@@ -40,7 +45,15 @@ HOSTZONE=example.com.
 ## Go Build
 
 ```bash
+# Run locally
 GOOS=linux GOARCH=amd64 go build .
+
+# Via docker
+export DOCKER_BUILDKIT=1 ## Enable Buildkit
+docker build -o disk .
+
+# Build docker image
+docker build -t "ptask:v1" .
 ```
 
 ## Run locally
