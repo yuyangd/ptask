@@ -4,13 +4,63 @@ Associate a Route53 record set to the public IP of an ECS Fargate Task.
 
 ## Usage
 
-Run this binary inside a Fargate task.
+### Run this binary inside a Fargate task.
 
 ```Dockerfile
 RUN curl -sL -o /usr/local/bin/ptask \
-    https://github.com/yuyangd/ptask/releases/download/v0.1/ptask \
+    https://github.com/yuyangd/ptask/releases/download/v0.2/ptask \
  && chmod +x /usr/local/bin/ptask
 ENTRYPOINT ["/usr/local/bin/ptask", "exec", "--"]
+```
+
+### Run as Fargate task sidecar container
+
+Build the ptask image
+
+```Dockerfile
+FROM alpine:3 AS downloader
+
+# install curl
+RUN apk --no-cache add curl ca-certificates
+
+# Download ptask
+RUN curl -sL -o /ptask \
+  https://github.com/yuyangd/ptask/releases/download/v0.2/ptask \
+  && chmod +x /ptask
+
+FROM scratch
+
+COPY --from=downloader /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=downloader /ptask /
+
+ENTRYPOINT [ "/ptask" ]
+```
+
+Example Task Definition in CFN
+
+```yaml
+  EcsTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      ContainerDefinitions:
+        - Name: ptask
+          Image: <PTASK-IMAGE>
+          Essential: false
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group:
+                Ref: CloudWatchLogsGroup
+              awslogs-region:
+                Ref: AWS::Region
+              awslogs-stream-prefix: fargate/bastion
+          Environment:
+            - Name: AWS_DEFAULT_REGION
+              Value: ap-southeast-2
+            - Name: HOSTHEADER
+              Value: <PTASK.EXAMPLE.COM>
+            - Name: HOSTZONE
+              Value: <EXAMPLE.COM.>
 ```
 
 ### IAM Policy
